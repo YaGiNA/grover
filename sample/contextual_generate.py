@@ -121,7 +121,7 @@ with tf.Session(config=tf_config, graph=tf.Graph()) as sess, \
     for i, article in enumerate(tqdm(articles)):
         article_pieces = _tokenize_article_pieces(encoder, article)
         context_formatted = []
-        for key in ['domain', 'date', 'authors', 'title', 'article']:
+        for key in ['article', 'comment_1', 'comment_2', 'comment_3']:
             if key != args.target:
                 context_formatted.extend(article_pieces.pop(key, []))
         context_formatted.append(encoder.__dict__['begin_{}'.format(args.target)])

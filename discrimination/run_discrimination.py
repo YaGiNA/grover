@@ -120,11 +120,11 @@ def _flatten_and_tokenize_metadata(encoder, item):
     Turn the article into tokens
     :param item: Contains things that need to be tokenized
 
-    fields are ['domain', 'date', 'authors', 'title', 'article', 'summary']
+    fields are ['article', 'comment_1', 'comment_2', 'comment_3', 'summary']
     :return: dict
     """
     metadata = []
-    for key in ['domain', 'date', 'authors', 'title', 'article']:
+    for key in ['article', 'comment_1', 'comment_2', 'comment_3']:
         val = item.get(key, None)
         if val is not None:
             metadata.append(encoder.__dict__[f'begin_{key}'])

@@ -58,7 +58,7 @@ class Encoder:
 
         del self.encoder['<|endoftext|>']
 
-        for special_token_type in ['domain', 'date', 'authors', 'title', 'article', 'summary']:
+        for special_token_type in ['article', 'comment_1', 'comment_2', 'comment_3']:
             setattr(self, f'begin_{special_token_type}', len(self.encoder))
             self.encoder[f'<|begin{special_token_type}|>'] = len(self.encoder)
 
@@ -168,18 +168,26 @@ def _tokenize_article_pieces(encoder, item):
     :param item: Contains things that need to be tokenized
 
 
-    fields are ['domain', 'date', 'authors', 'title', 'article', 'summary']
+    fields are ['article', 'comment_1', 'comment_2', 'comment_3']
     :return: dict
+    """
     """
     article_pieces = {
         'article': [encoder.begin_article] + encoder.encode(item['text']) + [encoder.end_article],
         'domain': [encoder.begin_domain] + encoder.encode(item['domain']) + [encoder.end_domain],
         'title': [encoder.begin_title] + encoder.encode(item['title']) + [encoder.end_title],
     }
+    """
+    article_pieces = {
+        'article': [encoder.begin_article] + encoder.encode(item['text']) + [encoder.end_article],
+        'comment_1': [encoder.begin_comment_1] + encoder.encode(item['comment_1']) + [encoder.end_comment_1],
+        'comment_2': [encoder.begin_comment_2] + encoder.encode(item['comment_2']) + [encoder.end_comment_2],
+        'comment_3': [encoder.begin_comment_3] + encoder.encode(item['comment_3']) + [encoder.end_comment_3],
+    }
     # 4/6: Attach the summary too, why the hell not
     if item['summary'] and len(item['summary']) > 50:
         article_pieces['summary'] = [encoder.begin_summary] + encoder.encode(item['summary']) + [encoder.end_summary]
-
+    """
     # 5/6: date
     date_split = item['publish_date'].split('-')
     assert len(date_split) == 3
@@ -194,8 +202,8 @@ def _tokenize_article_pieces(encoder, item):
     authors = ', '.join(item['authors'])
     if len(authors) > 5:
         article_pieces['authors'] = [encoder.begin_authors] + encoder.encode(authors) + [encoder.end_authors]
+    """
     return article_pieces
-
 
 def _cut_tokens_to_add_stuff(tokens, stuff_to_add, desired_size, padding_token):
     """
@@ -256,7 +264,7 @@ def tokenize_for_grover_training(encoder, item, desired_size=1024, unconditional
     """
     # Get all the bits and pieces
     article_pieces = _tokenize_article_pieces(encoder, item)
-    canonical_metadata_order = ['domain', 'date', 'authors', 'title']
+    canonical_metadata_order = ['comment_1', 'comment_2', 'comment_3']
 
     # unconditional_prob is probability we only generate the text first, without any metadata
     switch = random.random()
@@ -281,7 +289,7 @@ def tokenize_for_grover_training(encoder, item, desired_size=1024, unconditional
         chunk_a = []
         chunk_b = []
         for k in canonical_metadata_order + ['article', 'summary']:
-            if random.random() < metadata_dropout_prob and k not in ('article', 'title'):
+            if random.random() < metadata_dropout_prob and k not in ('article'):
                 pass
             elif random.random() < 0.5:
                 if k != 'summary':
@@ -347,7 +355,8 @@ def format_context(encoder, news_article, target):
     :param target: What we want to get an answer for.
     :return:
     """
-    canonical_metadata_order = ['domain', 'date', 'authors', 'title', 'article']
+    canonical_metadata_order = ['article',
+                                'comment_1', 'comment_2', 'comment_3']
     tokens = []
     for metadata_category in canonical_metadata_order:
         metadata = news_article.get(metadata_category, '').strip()
