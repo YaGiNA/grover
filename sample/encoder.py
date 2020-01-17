@@ -179,15 +179,16 @@ def _tokenize_article_pieces(encoder, item):
     }
     """
     article_pieces = {
-        'article': [encoder.begin_article] + encoder.encode(item['text']) + [encoder.end_article],
+        'article': [encoder.begin_article] + encoder.encode(item['article']) + [encoder.end_article],
         'comment_1': [encoder.begin_comment_1] + encoder.encode(item['comment_1']) + [encoder.end_comment_1],
         'comment_2': [encoder.begin_comment_2] + encoder.encode(item['comment_2']) + [encoder.end_comment_2],
         'comment_3': [encoder.begin_comment_3] + encoder.encode(item['comment_3']) + [encoder.end_comment_3],
     }
+    """
     # 4/6: Attach the summary too, why the hell not
     if item['summary'] and len(item['summary']) > 50:
         article_pieces['summary'] = [encoder.begin_summary] + encoder.encode(item['summary']) + [encoder.end_summary]
-    """
+
     # 5/6: date
     date_split = item['publish_date'].split('-')
     assert len(date_split) == 3
