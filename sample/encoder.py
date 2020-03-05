@@ -58,7 +58,7 @@ class Encoder:
 
         del self.encoder['<|endoftext|>']
 
-        for special_token_type in ['article', 'comment_1', 'comment_2', 'comment_3']:
+        for special_token_type in ['article', 'comment_1', 'comment_2', 'comment_3', 'summary']:
             setattr(self, f'begin_{special_token_type}', len(self.encoder))
             self.encoder[f'<|begin{special_token_type}|>'] = len(self.encoder)
 
@@ -184,11 +184,10 @@ def _tokenize_article_pieces(encoder, item):
         'comment_2': [encoder.begin_comment_2] + encoder.encode(item['comment_2']) + [encoder.end_comment_2],
         'comment_3': [encoder.begin_comment_3] + encoder.encode(item['comment_3']) + [encoder.end_comment_3],
     }
-    """
     # 4/6: Attach the summary too, why the hell not
     if item['summary'] and len(item['summary']) > 50:
         article_pieces['summary'] = [encoder.begin_summary] + encoder.encode(item['summary']) + [encoder.end_summary]
-
+    """
     # 5/6: date
     date_split = item['publish_date'].split('-')
     assert len(date_split) == 3
@@ -265,7 +264,7 @@ def tokenize_for_grover_training(encoder, item, desired_size=1024, unconditional
     """
     # Get all the bits and pieces
     article_pieces = _tokenize_article_pieces(encoder, item)
-    canonical_metadata_order = ['comment_1', 'comment_2', 'comment_3']
+    canonical_metadata_order = ['comment_1', 'comment_2', 'comment_3', 'summary']
 
     # unconditional_prob is probability we only generate the text first, without any metadata
     switch = random.random()

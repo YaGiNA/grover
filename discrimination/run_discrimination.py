@@ -124,7 +124,7 @@ def _flatten_and_tokenize_metadata(encoder, item):
     :return: dict
     """
     metadata = []
-    for key in ['article', 'comment_1', 'comment_2', 'comment_3']:
+    for key in ['article', 'comment_1', 'comment_2', 'comment_3', 'summary']:
         val = item.get(key, None)
         if val is not None:
             metadata.append(encoder.__dict__[f'begin_{key}'])
@@ -134,7 +134,7 @@ def _flatten_and_tokenize_metadata(encoder, item):
 
 
 def main(_):
-    LABEL_LIST = ['machine', 'human']
+    LABEL_LIST = ['fake', 'real']
     LABEL_INV_MAP = {label: i for i, label in enumerate(LABEL_LIST)}
 
     tf.logging.set_verbosity(tf.logging.INFO)
@@ -192,7 +192,7 @@ def main(_):
             })
             assert item['label'] in LABEL_INV_MAP
 
-    additional_data = {'machine': [], 'human': []}
+    additional_data = {'fake': [], 'real': []}
     if FLAGS.additional_data is not None:
         print("NOW WERE LOOKING AT ADDITIONAL INPUT DATA", flush=True)
         with tf.gfile.Open(FLAGS.additional_data, "r") as f:
@@ -210,24 +210,24 @@ def main(_):
     print("LETS GO", flush=True)
     if FLAGS.max_training_examples > 0:
 
-        examples_by_label = {'human': [], 'machine': []}
+        examples_by_label = {'real': [], 'fake': []}
         for x in examples['train']:
             examples_by_label[x['label']].append(x)
 
         new_examples = []
-        print("Unique machine examples: {} -> {}".format(len(examples_by_label['machine']),
+        print("Unique machine examples: {} -> {}".format(len(examples_by_label['fake']),
                                                          FLAGS.max_training_examples), flush=True)
-        machine_ex_to_keep = examples_by_label['machine'][:FLAGS.max_training_examples]
+        machine_ex_to_keep = examples_by_label['fake'][:FLAGS.max_training_examples]
 
         # So we just cut down on the TRUE machine examples. now lets try adding in additional examples
-        # examples_by_label['human'].extend(additional_data['human'])
+        # examples_by_label['real'].extend(additional_data['real'])
 
-        if len(additional_data['machine']) > 0:
-            amount_to_add = len(examples_by_label['human']) - len(machine_ex_to_keep)
+        if len(additional_data['fake']) > 0:
+            amount_to_add = len(examples_by_label['real']) - len(machine_ex_to_keep)
             if amount_to_add > 0:
-                machine_ex_to_keep.extend(additional_data['machine'][:amount_to_add])
+                machine_ex_to_keep.extend(additional_data['fake'][:amount_to_add])
 
-        for i, human_ex in enumerate(examples_by_label['human']):
+        for i, human_ex in enumerate(examples_by_label['real']):
             new_examples.append(human_ex)
             new_examples.append(machine_ex_to_keep[i % len(machine_ex_to_keep)])
 
