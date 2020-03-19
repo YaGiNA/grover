@@ -22,6 +22,7 @@ import os
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.lib.io import file_io
+from scipy import stats
 
 from lm.dataloader import classification_convert_examples_to_features, classification_input_fn_builder
 from lm.modeling import classification_model_fn_builder, GroverConfig
@@ -330,7 +331,21 @@ def main(_):
 
         preds = np.argmax(probs, 1)
         labels = np.array([LABEL_INV_MAP[x['label']] for x in examples[split][:num_actual_examples]])
+        fake_positive = preds == 1
+        fake_negative = preds == 0
+        fake_answer = labels == 1
+        fake_wrong = labels == 0
+
+        fake_tp = sum(fake_positive & fake_answer)
+        fake_fp = sum(fake_positive & fake_wrong)
+        fake_fn = sum(fake_negative & fake_answer)
+        fake_tn = sum(fake_negative & fake_wrong)
+
+        precision = fake_tp / (fake_tp + fake_fp)
+        recall = fake_tp / (fake_tp + fake_fn)
+
         print('{} ACCURACY IS {:.3f}'.format(split, np.mean(labels == preds)), flush=True)
+        print('{} PRECISION: {:.3f}, RECALL: {:.3f}, F1: {:.3f}'.format(split, precision, recall, stats.hmean([precision, recall])))
 
 
 if __name__ == "__main__":
